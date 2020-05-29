@@ -143,6 +143,7 @@ public class World implements Comparable<World> {
       request.add(".Data.Player");
       request.add(".Data.LevelName");
       request.add(".Data.GameType");
+      request.add(".Data.isCubicWorld");
       Map<String, Tag> result = NamedTag.quickParse(in, request);
 
       Tag version = result.get(".Data.version");
@@ -150,6 +151,11 @@ public class World implements Comparable<World> {
         Log.warnf("The world format for the world %s is not supported by Chunky.\n" + "Will attempt to load the world anyway.",
             levelName);
       }
+      if(!result.get(".Data.isCubicWorld").isError() && result.get(".Data.isCubicWorld").boolValue()) {
+        System.out.println("CubicChunks support not implemented");
+        return null;
+      }
+
       Tag player = result.get(".Data.Player");
       Tag spawnX = player.get("SpawnX");
       Tag spawnY = player.get("SpawnY");
