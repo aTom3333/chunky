@@ -27,10 +27,17 @@ import java.util.Map;
  * @author Jesper Öqvist (jesper@llbit.se)
  */
 public class ChunkPosition {
-  public int x, z;
+  public int x, y, z;
 
   private ChunkPosition(int x, int z) {
     this.x = x;
+    this.z = z;
+    this.y = 0;
+  }
+
+  private ChunkPosition(int x, int y, int z) {
+    this.x = x;
+    this.y = y;
     this.z = z;
   }
 

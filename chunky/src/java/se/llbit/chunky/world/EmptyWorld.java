@@ -16,7 +16,11 @@
  */
 package se.llbit.chunky.world;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
+import java.util.Set;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Represents an empty or non-existent world.
@@ -32,8 +36,17 @@ public class EmptyWorld extends World {
     super("[empty world]", null, OVERWORLD_DIMENSION, Collections.emptySet(), false, 0, -1);
   }
 
+  @Override
+  protected void appendRegionToZip(ZipOutputStream zout, File regionDirectory, ChunkPosition regionPos, String regionZipFileName, Set<ChunkPosition> chunks) throws IOException {
+
+  }
+
   @Override public String toString() {
     return "[empty world]";
   }
 
+  @Override
+  public Region createRegion(ChunkPosition pos) {
+    return EmptyRegion.instance;
+  }
 }

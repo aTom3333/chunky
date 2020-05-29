@@ -39,8 +39,22 @@ public class EmptyRegion extends Region {
     return EmptyRegionChunk.INSTANCE;
   }
 
+  @Override
+  public void parse() {
+  }
+
   @Override public boolean isEmpty() {
     return true;
+  }
+
+  @Override
+  public ChunkDataSource getChunkData(ChunkPosition chunkPos) {
+    return new ChunkDataSource((int) System.currentTimeMillis(), null);
+  }
+
+  @Override
+  public void deleteChunkFromRegion(ChunkPosition chunkPos) {
+
   }
 
   @Override public boolean hasChanged() {

@@ -55,7 +55,7 @@ import java.util.zip.ZipOutputStream;
  *
  * @author Jesper Öqvist <jesper@llbit.se>
  */
-public class World implements Comparable<World> {
+public abstract class World implements Comparable<World> {
 
   /** The currently supported NBT version of level.dat files. */
   public static final int NBT_VERSION = 19133;
@@ -72,31 +72,31 @@ public class World implements Comparable<World> {
   /** Default sea water level. */
   public static final int SEA_LEVEL = 63;
 
-  private final Map<ChunkPosition, Region> regionMap = new HashMap<>();
+  protected final Map<ChunkPosition, Region> regionMap = new HashMap<>();
 
-  private final File worldDirectory;
-  private Set<PlayerEntityData> playerEntities;
-  private final boolean haveSpawnPos;
-  private int playerDimension = 0;
-  private final int dimension;
+  protected final File worldDirectory;
+  protected Set<PlayerEntityData> playerEntities;
+  protected final boolean haveSpawnPos;
+  protected int playerDimension = 0;
+  protected final int dimension;
 
-  private final Heightmap heightmap = new Heightmap();
+  protected final Heightmap heightmap = new Heightmap();
 
-  private final String levelName;
+  protected final String levelName;
 
-  private final Collection<ChunkDeletionListener> chunkDeletionListeners = new LinkedList<>();
-  private final Collection<ChunkTopographyListener> chunkTopographyListeners = new LinkedList<>();
-  private final Collection<ChunkUpdateListener> chunkUpdateListeners = new LinkedList<>();
-  private int spawnX;
-  private int spawnY;
-  private int spawnZ;
+  protected final Collection<ChunkDeletionListener> chunkDeletionListeners = new LinkedList<>();
+  protected final Collection<ChunkTopographyListener> chunkTopographyListeners = new LinkedList<>();
+  protected final Collection<ChunkUpdateListener> chunkUpdateListeners = new LinkedList<>();
+  protected int spawnX;
+  protected int spawnY;
+  protected int spawnZ;
 
-  private int gameMode = 0;
+  protected int gameMode = 0;
 
-  private final long seed;
+  protected final long seed;
 
   /** Timestamp for level.dat when player data was last loaded. */
-  private long timestamp;
+  protected long timestamp;
 
   /**
    * @param levelName name of the world (not the world directory).
@@ -151,9 +151,9 @@ public class World implements Comparable<World> {
         Log.warnf("The world format for the world %s is not supported by Chunky.\n" + "Will attempt to load the world anyway.",
             levelName);
       }
+      boolean isCubicChunkWorld = false;
       if(!result.get(".Data.isCubicWorld").isError() && result.get(".Data.isCubicWorld").boolValue()) {
-        System.out.println("CubicChunks support not implemented");
-        return null;
+        isCubicChunkWorld = true;
       }
 
       Tag player = result.get(".Data.Player");
@@ -174,8 +174,14 @@ public class World implements Comparable<World> {
 
       boolean haveSpawnPos = !(spawnX.isError() || spawnY.isError() || spawnZ.isError());
 
-      World world = new World(levelName, worldDirectory, dimension,
-          playerEntities, haveSpawnPos, seed, modtime);
+      World world = null;
+      if(isCubicChunkWorld) {
+        world = new se.llbit.chunky.world.cubicchunks.World(levelName, worldDirectory, dimension,
+                playerEntities, haveSpawnPos, seed, modtime);
+      } else {
+        world = new se.llbit.chunky.world.minecraft1_13.World(levelName, worldDirectory, dimension,
+                playerEntities, haveSpawnPos, seed, modtime);
+      }
       world.spawnX = spawnX.intValue();
       world.spawnY = spawnY.intValue();
       world.spawnZ = spawnZ.intValue();
@@ -277,7 +283,7 @@ public class World implements Comparable<World> {
       // check if the region is present in the world directory
       Region region = EmptyRegion.instance;
       if (regionExists(pos)) {
-        region = new Region(pos, this);
+        region = createRegion(pos);
       }
       setRegion(pos, region);
       return region;
@@ -381,7 +387,7 @@ public class World implements Comparable<World> {
     synchronized (this) {
       Region region = regionMap.get(pos);
       if (region == null) {
-        region = new Region(pos, this);
+        region = createRegion(pos);
         regionMap.put(pos, region);
       }
     }
@@ -520,14 +526,9 @@ public class World implements Comparable<World> {
     in.close();
   }
 
-  private void appendRegionToZip(ZipOutputStream zout, File regionDirectory,
+  protected abstract void appendRegionToZip(ZipOutputStream zout, File regionDirectory,
       ChunkPosition regionPos, String regionZipFileName, Set<ChunkPosition> chunks)
-      throws IOException {
-
-    zout.putNextEntry(new ZipEntry(regionZipFileName));
-    Region.writeRegion(regionDirectory, regionPos, new DataOutputStream(zout), chunks);
-    zout.closeEntry();
-  }
+      throws IOException;
 
   @Override public String toString() {
     return levelName + " (" + worldDirectory.getName() + ")";
@@ -651,4 +652,6 @@ public class World implements Comparable<World> {
   public synchronized Collection<PlayerEntityData> getPlayerPositions() {
     return Collections.unmodifiableSet(playerEntities);
   }
+
+  public abstract Region createRegion(ChunkPosition pos);
 }
