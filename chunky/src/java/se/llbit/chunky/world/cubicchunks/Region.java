@@ -116,4 +116,9 @@ public class Region extends se.llbit.chunky.world.Region {
   public Iterator<Chunk> iterator() {
     throw new RuntimeException("Not implemented");
   }
+
+  @Override
+  public boolean chunkChangedSince(ChunkPosition position, int timestamp) {
+    throw new RuntimeException("Not implemented");
+  }
 }

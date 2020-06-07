@@ -39,23 +39,13 @@ import se.llbit.log.Log;
  * @author Jesper Öqvist <jesper@llbit.se>
  */
 public abstract class Region implements Iterable<Chunk> {
-
-  /**
-   * Region X chunk width
-   */
-  public static final int CHUNKS_X = 32;
-
-  /**
-   * Region Z chunk width
-   */
-  public static final int CHUNKS_Z = 32;
-
-  protected static final int NUM_CHUNKS = CHUNKS_X * CHUNKS_Z;
+  // TODO May be better to make Region an implementation detail of the world
+  // (in cubicchunks they are two types of regions, 2d regions that are 32*32 chunks
+  // and 3d regions that are 16*16*16 chunks, it would be awkward to make a region implementation encompassing those two as one meaningfully)
 
   protected final ChunkPosition position;
   protected final World world;
   protected long regionFileTime = 0;
-  protected final int[] chunkTimestamps = new int[NUM_CHUNKS];
 
   /**
    * Create new region
@@ -131,12 +121,7 @@ public abstract class Region implements Iterable<Chunk> {
 
   public abstract boolean hasChanged();
 
-  /**
-   * @return {@code true} if the chunk has changed since the timestamp
-   */
-  public boolean chunkChangedSince(ChunkPosition chunkPos, int timestamp) {
-    return timestamp != chunkTimestamps[(chunkPos.x & 31) + (chunkPos.z & 31) * 32];
-  }
-
   @Override public  abstract Iterator<Chunk> iterator();
+
+  public abstract boolean chunkChangedSince(ChunkPosition position, int timestamp);
 }

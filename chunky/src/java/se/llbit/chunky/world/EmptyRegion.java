@@ -81,4 +81,9 @@ public class EmptyRegion extends Region {
       }
     };
   }
+
+  @Override
+  public boolean chunkChangedSince(ChunkPosition position, int timestamp) {
+    return false;
+  }
 }

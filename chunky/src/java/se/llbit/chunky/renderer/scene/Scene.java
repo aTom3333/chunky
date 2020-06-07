@@ -787,9 +787,7 @@ public class Scene implements JsonSerializable, Refreshable {
         loadedChunks.add(cp);
 
         numChunks += 1;
-        // TODO This should be done is the abstract chunk (when chunks are abstracted)
         world.getChunk(cp).addChunkToScene(worldOctree, waterOctree, palette, origin, yClipMin, yClipMax, entities, actors, biomeIdMap);
-
       }
     }
 

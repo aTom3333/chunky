@@ -1,13 +1,17 @@
 package se.llbit.chunky.world.minecraft1_13;
 
+import se.llbit.chunky.map.IconLayer;
 import se.llbit.chunky.world.EmptyChunk;
 import se.llbit.chunky.world.minecraft1_13.Chunk;
 import se.llbit.chunky.world.ChunkDataSource;
 import se.llbit.chunky.world.ChunkPosition;
 import se.llbit.log.Log;
+import se.llbit.nbt.Tag;
 
 import java.io.*;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
@@ -18,6 +22,20 @@ public class Region extends se.llbit.chunky.world.Region {
    * Sector size in bytes.
    */
   private final static int SECTOR_SIZE = 4096;
+
+  /**
+   * Region X chunk width
+   */
+  public static final int CHUNKS_X = 32;
+
+  /**
+   * Region Z chunk width
+   */
+  public static final int CHUNKS_Z = 32;
+
+  protected static final int NUM_CHUNKS = CHUNKS_X * CHUNKS_Z;
+  protected final int[] chunkTimestamps = new int[NUM_CHUNKS];
+
   protected final se.llbit.chunky.world.Chunk[] chunks = new se.llbit.chunky.world.Chunk[NUM_CHUNKS];
 
 
@@ -269,5 +287,14 @@ public class Region extends se.llbit.chunky.world.Region {
         chunks[index] = EmptyChunk.INSTANCE;
       }
     };
+  }
+
+
+  /**
+   * @return {@code true} if the chunk has changed since the timestamp
+   */
+  @Override
+  public boolean chunkChangedSince(ChunkPosition chunkPos, int timestamp) {
+    return timestamp != chunkTimestamps[(chunkPos.x & 31) + (chunkPos.z & 31) * 32];
   }
 }

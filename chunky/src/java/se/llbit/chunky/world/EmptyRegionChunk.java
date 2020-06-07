@@ -59,18 +59,6 @@ public class EmptyRegionChunk extends Chunk {
     surface = IconLayer.CORRUPT;
   }
 
-  @Override public synchronized void getBlockData(int[] blocks, byte[] biomes,
-      Collection<CompoundTag> tileEntities, Collection<CompoundTag> entities,
-      BlockPalette palette) {
-    for (int i = 0; i < X_MAX * Y_MAX * Z_MAX; ++i) {
-      blocks[i] = 0;
-    }
-
-    for (int i = 0; i < X_MAX * Z_MAX; ++i) {
-      biomes[i] = 0;
-    }
-  }
-
   @Override public void renderSurface(MapTile tile) {
     renderEmpty(tile);
   }
