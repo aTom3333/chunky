@@ -52,7 +52,6 @@ public abstract class Region implements Iterable<Chunk> {
 
   protected static final int NUM_CHUNKS = CHUNKS_X * CHUNKS_Z;
 
-  protected final Chunk[] chunks = new Chunk[NUM_CHUNKS];
   protected final ChunkPosition position;
   protected final World world;
   protected long regionFileTime = 0;
@@ -66,34 +65,10 @@ public abstract class Region implements Iterable<Chunk> {
   public Region(ChunkPosition pos, World world) {
     this.world = world;
     position = pos;
-    for (int z = 0; z < CHUNKS_Z; ++z) {
-      for (int x = 0; x < CHUNKS_X; ++x) {
-        chunks[x + z * 32] = EmptyChunk.INSTANCE;
-      }
-    }
   }
 
-  /**
-   * @return Chunk at (x, z)
-   */
-  public Chunk getChunk(int x, int z) {
-    return chunks[(x & 31) + (z & 31) * 32];
-  }
-
-  /**
-   * @param pos Chunk position
-   * @return Chunk at given position
-   */
-  public Chunk getChunk(ChunkPosition pos) {
-    return chunks[(pos.x & 31) + (pos.z & 31) * 32];
-  }
-
-  /**
-   * Set chunk at given position.
-   */
-  public void setChunk(ChunkPosition pos, Chunk chunk) {
-    chunks[(pos.x & 31) + (pos.z & 31) * 32] = chunk;
-  }
+  public abstract Chunk getChunk(ChunkPosition pos);
+  public abstract void setChunk(ChunkPosition pos, Chunk chunk);
 
   /**
    * Delete a chunk.
@@ -163,21 +138,5 @@ public abstract class Region implements Iterable<Chunk> {
     return timestamp != chunkTimestamps[(chunkPos.x & 31) + (chunkPos.z & 31) * 32];
   }
 
-  @Override public Iterator<Chunk> iterator() {
-    return new Iterator<Chunk>() {
-      private int index = 0;
-
-      @Override public boolean hasNext() {
-        return index < NUM_CHUNKS;
-      }
-
-      @Override public Chunk next() {
-        return chunks[index++];
-      }
-
-      @Override public void remove() {
-        chunks[index] = EmptyChunk.INSTANCE;
-      }
-    };
-  }
+  @Override public  abstract Iterator<Chunk> iterator();
 }

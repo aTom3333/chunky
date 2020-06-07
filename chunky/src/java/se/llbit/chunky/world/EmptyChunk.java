@@ -16,12 +16,25 @@
  */
 package se.llbit.chunky.world;
 
+import se.llbit.chunky.block.Air;
+import se.llbit.chunky.block.Block;
+import se.llbit.chunky.block.Lava;
+import se.llbit.chunky.block.Water;
 import se.llbit.chunky.chunk.BlockPalette;
+import se.llbit.chunky.entity.ArmorStand;
+import se.llbit.chunky.entity.Entity;
+import se.llbit.chunky.entity.PaintingEntity;
 import se.llbit.chunky.map.IconLayer;
 import se.llbit.chunky.map.MapTile;
+import se.llbit.math.Octree;
+import se.llbit.math.Vector3;
+import se.llbit.math.Vector3i;
 import se.llbit.nbt.CompoundTag;
+import se.llbit.nbt.ListTag;
+import se.llbit.nbt.Tag;
 
 import java.util.Collection;
+import java.util.LinkedList;
 
 /**
  * Empty or non-existent chunk.
@@ -94,5 +107,10 @@ public class EmptyChunk extends Chunk {
 
   @Override public String toString() {
     return "Chunk: [empty]";
+  }
+
+  @Override
+  public void addChunkToScene(Octree worldOctree, Octree waterOctree, BlockPalette palette, Vector3i origin, int yClipMin, int yClipMax, Collection<Entity> entities, Collection<Entity> actors, Heightmap biomeIdMap) {
+
   }
 }

@@ -77,7 +77,7 @@ public class MapTile {
       int pixelOffset = 0;
       for (int z = 0; z < 32; ++z) {
         for (int x = 0; x < 32; ++x) {
-          Chunk chunk = region.getChunk(x, z);
+          Chunk chunk = region.getChunk(ChunkPosition.get(x, z));
           pixels[pixelOffset] = chunk.biomeColor();
           if (selection.isSelected(chunk.getPosition())) {
             pixels[pixelOffset] = selectionTint(pixels[pixelOffset]);

@@ -16,6 +16,8 @@
  */
 package se.llbit.chunky.world;
 
+import java.util.Iterator;
+
 /**
  * An empty or non-existent region.
  *
@@ -59,5 +61,24 @@ public class EmptyRegion extends Region {
 
   @Override public boolean hasChanged() {
     return false;
+  }
+
+  @Override
+  public void setChunk(ChunkPosition pos, Chunk chunk) {
+  }
+
+  @Override
+  public Iterator<Chunk> iterator() {
+    return new Iterator<Chunk>() {
+      @Override
+      public boolean hasNext() {
+        return false;
+      }
+
+      @Override
+      public Chunk next() {
+        return null;
+      }
+    };
   }
 }

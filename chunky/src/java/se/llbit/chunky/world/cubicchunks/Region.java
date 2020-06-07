@@ -7,6 +7,7 @@ import se.llbit.nbt.NamedTag;
 import se.llbit.nbt.Tag;
 
 import java.io.*;
+import java.util.Iterator;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
 
@@ -98,6 +99,21 @@ public class Region extends se.llbit.chunky.world.Region {
 
   @Override
   public boolean hasChanged() {
+    throw new RuntimeException("Not implemented");
+  }
+
+  @Override
+  public Chunk getChunk(ChunkPosition pos) {
+    throw new RuntimeException("Not implemented");
+  }
+
+  @Override
+  public void setChunk(ChunkPosition pos, Chunk chunk) {
+    throw new RuntimeException("Not implemented");
+  }
+
+  @Override
+  public Iterator<Chunk> iterator() {
     throw new RuntimeException("Not implemented");
   }
 }

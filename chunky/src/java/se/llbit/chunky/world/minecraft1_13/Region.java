@@ -1,11 +1,13 @@
 package se.llbit.chunky.world.minecraft1_13;
 
-import se.llbit.chunky.world.Chunk;
+import se.llbit.chunky.world.EmptyChunk;
+import se.llbit.chunky.world.minecraft1_13.Chunk;
 import se.llbit.chunky.world.ChunkDataSource;
 import se.llbit.chunky.world.ChunkPosition;
 import se.llbit.log.Log;
 
 import java.io.*;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
@@ -16,6 +18,7 @@ public class Region extends se.llbit.chunky.world.Region {
    * Sector size in bytes.
    */
   private final static int SECTOR_SIZE = 4096;
+  protected final se.llbit.chunky.world.Chunk[] chunks = new se.llbit.chunky.world.Chunk[NUM_CHUNKS];
 
 
   protected final String fileName;
@@ -23,6 +26,11 @@ public class Region extends se.llbit.chunky.world.Region {
   public Region(ChunkPosition pos, World world) {
     super(pos, world);
     fileName = pos.getMcaName();
+    for (int z = 0; z < CHUNKS_Z; ++z) {
+      for (int x = 0; x < CHUNKS_X; ++x) {
+        chunks[x + z * 32] = EmptyChunk.INSTANCE;
+      }
+    }
   }
 
   @Override
@@ -46,7 +54,7 @@ public class Region extends se.llbit.chunky.world.Region {
       for (int z = 0; z < 32; ++z) {
         for (int x = 0; x < 32; ++x) {
           ChunkPosition pos = ChunkPosition.get((position.x << 5) + x, (position.z << 5) + z);
-          Chunk chunk = getChunk(x, z);
+          se.llbit.chunky.world.Chunk chunk = getChunk(x, z);
           int loc = file.readInt();
           if (loc != 0) {
             if (chunk.isEmpty()) {
@@ -218,5 +226,48 @@ public class Region extends se.llbit.chunky.world.Region {
     } catch (IOException e) {
       Log.warnf("Failed to delete chunk: %s", e.getMessage());
     }
+  }
+
+
+  /**
+   * @return Chunk at (x, z)
+   */
+  public se.llbit.chunky.world.Chunk getChunk(int x, int z) {
+    return chunks[(x & 31) + (z & 31) * 32];
+  }
+
+  /**
+   * @param pos Chunk position
+   * @return Chunk at given position
+   */
+  @Override
+  public se.llbit.chunky.world.Chunk getChunk(ChunkPosition pos) {
+    return chunks[(pos.x & 31) + (pos.z & 31) * 32];
+  }
+
+  /**
+   * Set chunk at given position.
+   */
+  @Override
+  public void setChunk(ChunkPosition pos, se.llbit.chunky.world.Chunk chunk) {
+    chunks[(pos.x & 31) + (pos.z & 31) * 32] = chunk;
+  }
+
+  @Override public Iterator<se.llbit.chunky.world.Chunk> iterator() {
+    return new Iterator<se.llbit.chunky.world.Chunk>() {
+      private int index = 0;
+
+      @Override public boolean hasNext() {
+        return index < NUM_CHUNKS;
+      }
+
+      @Override public se.llbit.chunky.world.Chunk next() {
+        return chunks[index++];
+      }
+
+      @Override public void remove() {
+        chunks[index] = EmptyChunk.INSTANCE;
+      }
+    };
   }
 }

@@ -19,12 +19,15 @@ package se.llbit.chunky.world;
 import se.llbit.chunky.block.Air;
 import se.llbit.chunky.block.Block;
 import se.llbit.chunky.chunk.BlockPalette;
+import se.llbit.chunky.entity.Entity;
 import se.llbit.chunky.map.AbstractLayer;
 import se.llbit.chunky.map.BiomeLayer;
 import se.llbit.chunky.map.IconLayer;
 import se.llbit.chunky.map.MapTile;
 import se.llbit.chunky.map.SurfaceLayer;
+import se.llbit.math.Octree;
 import se.llbit.math.QuickMath;
+import se.llbit.math.Vector3i;
 import se.llbit.nbt.CompoundTag;
 import se.llbit.nbt.ErrorTag;
 import se.llbit.nbt.ListTag;
@@ -48,7 +51,7 @@ import java.util.Set;
  *
  * @author Jesper Öqvist (jesper@llbit.se)
  */
-public class Chunk {
+abstract public class Chunk {
 
   public static final String LEVEL_HEIGHTMAP = ".Level.HeightMap";
   public static final String LEVEL_SECTIONS = ".Level.Sections";
@@ -65,22 +68,22 @@ public class Chunk {
   /** Chunk depth. */
   public static final int Z_MAX = 16;
 
-  private static final int SECTION_Y_MAX = 16;
-  private static final int SECTION_BYTES = X_MAX * SECTION_Y_MAX * Z_MAX;
-  private static final int SECTION_HALF_NIBBLES = SECTION_BYTES / 2;
-  private static final int CHUNK_BYTES = X_MAX * Y_MAX * Z_MAX;
+  protected static final int SECTION_Y_MAX = 16;
+  protected static final int SECTION_BYTES = X_MAX * SECTION_Y_MAX * Z_MAX;
+  protected static final int SECTION_HALF_NIBBLES = SECTION_BYTES / 2;
+  protected static final int CHUNK_BYTES = X_MAX * Y_MAX * Z_MAX;
 
-  private final ChunkPosition position;
+  protected final ChunkPosition position;
   protected volatile AbstractLayer surface = IconLayer.UNKNOWN;
   protected volatile AbstractLayer biomes = IconLayer.UNKNOWN;
 
-  private final World world;
+  protected final World world;
 
-  private int dataTimestamp = 0;
-  private int surfaceTimestamp = 0;
-  private int biomesTimestamp = 0;
+  protected int dataTimestamp = 0;
+  protected int surfaceTimestamp = 0;
+  protected int biomesTimestamp = 0;
 
-  private String version;
+  protected String version;
 
   public Chunk(ChunkPosition pos, World world) {
     this.world = world;
@@ -449,4 +452,10 @@ public class Chunk {
   public String getVersion() {
     return version;
   }
+
+  // TODO Find a way to do better than that monstrosity, passing the around the best solution?
+  public abstract void addChunkToScene(Octree worldOctree, Octree waterOctree, BlockPalette palette,
+                                       Vector3i origin, int yClipMin, int yClipMax,
+                                       Collection<Entity> entities, Collection<Entity> actors,
+                                       Heightmap biomeIdMap);
 }
