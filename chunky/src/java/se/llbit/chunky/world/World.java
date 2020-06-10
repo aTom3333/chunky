@@ -22,6 +22,7 @@ import se.llbit.chunky.entity.PlayerEntity;
 import se.llbit.chunky.world.listeners.ChunkDeletionListener;
 import se.llbit.chunky.world.listeners.ChunkTopographyListener;
 import se.llbit.chunky.world.listeners.ChunkUpdateListener;
+import se.llbit.chunky.world.minecraft1_13.WorldOld;
 import se.llbit.log.Log;
 import se.llbit.math.Vector3;
 import se.llbit.nbt.NamedTag;
@@ -29,7 +30,6 @@ import se.llbit.nbt.Tag;
 import se.llbit.util.Pair;
 
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -179,7 +179,7 @@ public abstract class World implements Comparable<World> {
         world = new se.llbit.chunky.world.cubicchunks.World(levelName, worldDirectory, dimension,
                 playerEntities, haveSpawnPos, seed, modtime);
       } else {
-        world = new se.llbit.chunky.world.minecraft1_13.World(levelName, worldDirectory, dimension,
+        world = new WorldOld(levelName, worldDirectory, dimension,
                 playerEntities, haveSpawnPos, seed, modtime);
       }
       world.spawnX = spawnX.intValue();

@@ -1,7 +1,6 @@
 package se.llbit.chunky.world;
 
 
-import se.llbit.chunky.map.MapView;
 import se.llbit.chunky.renderer.scene.Scene;
 
 /**
@@ -39,8 +38,6 @@ public interface WorldInterface {
    * the preloading threads can take and execute. Those preloading jobs will be world specific
    * so they'll be able to use the knowledge of the world units without leaking it
    */
-  // TODO Define interface of LoadingJob
-  interface PreLoadingJob {}
   PreLoadingJob nextPreLoadingJob();
 
 
@@ -51,8 +48,9 @@ public interface WorldInterface {
    * Note: the types and names are temporary and just to give an idea of what is needed
    * the current MapView can't be used as it uses ChunkView which leak implementation detail
    * (and it isn't used like that, perhaps World needs to be listener?)
+   * @param newView
    */
-  void viewChanged(MapView newView);
+  void viewChanged(WorldView newView);
 
 
   /**
@@ -72,8 +70,6 @@ public interface WorldInterface {
    * Anyway, if we go for such a selection, we would need a better data structure for the selection,
    * a list of every blocks or even every 1*1 column wouldn't cut it.
    */
-  // TODO Design that selection class/interface
-  class Selection {}
   void setSelection(Selection selection);
 
 
