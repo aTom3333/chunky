@@ -4,16 +4,25 @@ import se.llbit.chunky.world.ChunkPosition;
 import se.llbit.chunky.world.PreLoadingJob;
 
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class RegionManager {
+  /**
+   * Those 3 fields must be protected by the lock
+   */
   private final Map<ChunkPosition, Region> regionPreloaded = new HashMap<>();
   private final Set<ChunkPosition> regionsPreloading = new HashSet<>();
   private final Queue<ChunkPosition> regionToPreload = new ArrayDeque<>();
 
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
+  /**
+   * This queue does not need to be protected by the lock
+   */
+  private final BlockingQueue<Region> regionToPreLoadChunks = new LinkedBlockingQueue<>();
 
   public Region getRegion(ChunkPosition pos) {
     Region region = null;
@@ -83,6 +92,21 @@ public class RegionManager {
       regionPreloaded.put(pos, region);
     } finally {
       lock.writeLock().unlock();
+    }
+    try {
+      regionToPreLoadChunks.put(region);
+    } catch(InterruptedException ignored) {
+    }
+  }
+
+  /**
+   * Get the next region for which we want to preload the chunks
+   */
+  public Region getNextRegionToPreloadChunks() {
+    try {
+      return regionToPreLoadChunks.poll(200, TimeUnit.MILLISECONDS);
+    } catch(InterruptedException ignored) {
+      return null;
     }
   }
 }

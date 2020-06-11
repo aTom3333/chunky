@@ -41,8 +41,13 @@ public class World implements WorldInterface {
     return () -> {
       ChunkPosition regionToLoad = regionManager.getNextRegionToLoad();
       if(regionToLoad == null) {
-        // No more region to load
-        // TODO Load chunks
+        // No more region to load, load chunks
+        Region regionToPreLoadChunks = regionManager.getNextRegionToPreloadChunks();
+        if(regionToPreLoadChunks == null)
+          return;
+        if(regionToPreLoadChunks.isEmpty())
+          return;
+        ((LoadedRegion)regionToPreLoadChunks).preLoadChunks(currentView); // Taking the view here might not be thread safe
       } else {
         File regionFile = LoadedRegion.regionFileFromPosition(this, regionToLoad);
         if(!regionFile.exists()) {
