@@ -7,6 +7,7 @@ import se.llbit.log.Log;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -30,6 +31,8 @@ public class World implements WorldInterface {
   private Selection selection;
 
   private WorldView currentView;
+
+  private AtomicReference<MapRenderer> mapRenderer;
 
   public World(File worldDirectory) {
     this.worldDirectory = worldDirectory;
@@ -82,8 +85,17 @@ public class World implements WorldInterface {
   }
 
   @Override
-  public MapRenderingJob nextMapRenderingJob() {
-    return null;
+  public MapRenderer getMapRenderer() {
+    // If a MapRenderer doesn't already exist, create one
+    MapRenderer renderer = mapRenderer.get();
+    if(renderer != null)
+      return renderer;
+
+    renderer = new MapRenderer(this);
+    if(mapRenderer.compareAndSet(null, renderer))
+      return renderer;
+
+    return mapRenderer.get();
   }
 
 

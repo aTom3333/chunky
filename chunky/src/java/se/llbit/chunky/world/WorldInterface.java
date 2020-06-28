@@ -1,6 +1,7 @@
 package se.llbit.chunky.world;
 
 
+import se.llbit.chunky.map.MapRenderer;
 import se.llbit.chunky.renderer.scene.Scene;
 
 /**
@@ -90,7 +91,7 @@ public interface WorldInterface {
 
 
   /**
-   * The map view needs to be rendered by the world, preferably asynchronously
+   * The map view needs to be rendered by the world
    *
    * Right now, there are 2 different map rendering, topography and biome.
    * Should biomes be considered to be an implementation detail or not?
@@ -100,12 +101,9 @@ public interface WorldInterface {
    *  it is an implementation detail, map view will need to encompass the zoom level
    *  to allow us to between topology and biome rendering with a single method
    *
-   *  As for the preloading, a solution to not leaking implementation detail is
-   *  to offer map rendering jobs
+   * A mapRenderer can be requested and the implementation will happen through this class
    */
-  // TODO Define interface MapRenderingJob
-  interface MapRenderingJob {}
-  MapRenderingJob nextMapRenderingJob();
+  MapRenderer getMapRenderer();
 
 
   /**
