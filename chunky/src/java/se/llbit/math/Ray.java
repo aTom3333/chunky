@@ -203,13 +203,12 @@ public class Ray {
       tNext = t;
       nx = 1;
       ny = nz = 0;
-    } else {
-      t = ((bx + 1) - o.x) / d.x;
-      if (t < tNext && t > Ray.EPSILON) {
-        tNext = t;
-        nx = -1;
-        ny = nz = 0;
-      }
+    }
+    t = ((bx + 1) - o.x) / d.x;
+    if (t < tNext && t > Ray.EPSILON) {
+      tNext = t;
+      nx = -1;
+      ny = nz = 0;
     }
 
     t = (by - o.y) / d.y;
@@ -217,13 +216,12 @@ public class Ray {
       tNext = t;
       ny = 1;
       nx = nz = 0;
-    } else {
-      t = ((by + 1) - o.y) / d.y;
-      if (t < tNext && t > Ray.EPSILON) {
-        tNext = t;
-        ny = -1;
-        nx = nz = 0;
-      }
+    }
+    t = ((by + 1) - o.y) / d.y;
+    if (t < tNext && t > Ray.EPSILON) {
+      tNext = t;
+      ny = -1;
+      nx = nz = 0;
     }
 
     t = (bz - o.z) / d.z;
@@ -231,13 +229,12 @@ public class Ray {
       tNext = t;
       nz = 1;
       nx = ny = 0;
-    } else {
-      t = ((bz + 1) - o.z) / d.z;
-      if (t < tNext && t > Ray.EPSILON) {
-        tNext = t;
-        nz = -1;
-        nx = ny = 0;
-      }
+    }
+    t = ((bz + 1) - o.z) / d.z;
+    if (t < tNext && t > Ray.EPSILON) {
+      tNext = t;
+      nz = -1;
+      nx = ny = 0;
     }
 
     o.scaleAdd(tNext, d);

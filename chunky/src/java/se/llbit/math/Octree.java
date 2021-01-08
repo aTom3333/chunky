@@ -457,15 +457,18 @@ public class Octree {
 
     int depth = implementation.getDepth();
 
+    double distance = Ray.EPSILON;
+
+    int x = (int) QuickMath.floor(ray.o.x + ray.d.x * Ray.OFFSET);
+    int y = (int) QuickMath.floor(ray.o.y + ray.d.y * Ray.OFFSET);
+    int z = (int) QuickMath.floor(ray.o.z + ray.d.z * Ray.OFFSET);
+
     // Marching is done in a top-down fashion: at each step, the octree is descended from the root to find the leaf
     // node the ray is in. Terminating the march is then decided based on the block type in that leaf node. Finally the
     // ray is advanced to the boundary of the current leaf node and the next, ready for the next iteration.
     while (true) {
       // Add small offset past the intersection to avoid
       // recursion to the same octree node!
-      int x = (int) QuickMath.floor(ray.o.x + ray.d.x * Ray.OFFSET);
-      int y = (int) QuickMath.floor(ray.o.y + ray.d.y * Ray.OFFSET);
-      int z = (int) QuickMath.floor(ray.o.z + ray.d.z * Ray.OFFSET);
 
       int lx = x >>> depth;
       int ly = y >>> depth;
@@ -490,19 +493,88 @@ public class Octree {
       ray.setCurrentMaterial(currentBlock);
 
       if (currentBlock.localIntersect) {
+        // Other functions expect the ray origin to be in the block they test so here time
+        // to update it
+        distance -= Ray.EPSILON;
+        ray.o.scaleAdd(distance, ray.d);
+        ray.distance += distance;
+        distance = Ray.EPSILON;
         if (currentBlock.intersect(ray, scene)) {
           if (prevBlock != currentBlock)
             return true;
 
           ray.o.scaleAdd(Ray.OFFSET, ray.d);
+
+          x = (int) QuickMath.floor(ray.o.x + ray.d.x * Ray.OFFSET);
+          y = (int) QuickMath.floor(ray.o.y + ray.d.y * Ray.OFFSET);
+          z = (int) QuickMath.floor(ray.o.z + ray.d.z * Ray.OFFSET);
           continue;
         } else {
           // Exit ray from this local block.
           ray.setCurrentMaterial(Air.INSTANCE); // Current material is air.
           ray.exitBlock(x, y, z);
+          x = (int) QuickMath.floor(ray.o.x + ray.d.x * Ray.OFFSET);
+          y = (int) QuickMath.floor(ray.o.y + ray.d.y * Ray.OFFSET);
+          z = (int) QuickMath.floor(ray.o.z + ray.d.z * Ray.OFFSET);
           continue;
         }
       } else if (!currentBlock.isSameMaterial(prevBlock) && currentBlock != Air.INSTANCE) {
+        // This is the only branch where the normals are not computed by another function so we do it here
+        // Origin and distance of ray also need to be updated as well
+        distance -= Ray.EPSILON;
+        ray.o.scaleAdd(distance, ray.d);
+        ray.distance += distance;
+        distance = Ray.EPSILON;
+
+        int nx = 0, ny = 0, nz = 0;
+        double tNear = Double.POSITIVE_INFINITY;
+
+        // testing all 6 faces but, we offset the origin a bit so it is really
+        // inside the block and not just on the edge (the Ray.OFFSET addition when computing t)
+        // and we make the ray go backward (the minus sign) because we want to know the normal at the point we entered
+        // We could also subtract Ray.OFFSET (so the origin of the ray is outside) and shoot the ray forward instead
+        // But by having the origin inside, we can skip some face (the face is the else are not always tested)
+        // indeed when the origin is inside you can only have one of two parallel faces in front
+        // and one in the back so if one is found, no need to test the other one
+        double t = -(x - ray.o.x) / ray.d.x + Ray.OFFSET;
+        if (t > distance) {
+          tNear = t;
+          nx = 1;
+        } else {
+          t = -((x + 1) - ray.o.x) / ray.d.x + Ray.OFFSET;
+          if (t < tNear && t > distance) {
+            tNear = t;
+            nx = -1;
+          }
+        }
+
+        t = -(y - ray.o.y) / ray.d.y + Ray.OFFSET;
+        if (t < tNear && t > distance) {
+          tNear = t;
+          ny = 1;
+          nx = 0;
+        } else {
+          t = -((y + 1) - ray.o.y) / ray.d.y + Ray.OFFSET;
+          if (t < tNear && t > distance) {
+            tNear = t;
+            ny = -1;
+            nx = 0;
+          }
+        }
+
+        t = -(z - ray.o.z) / ray.d.z + Ray.OFFSET;
+        if (t < tNear && t > distance) {
+          nz = 1;
+          nx = ny = 0;
+        } else {
+          t = -((z + 1) - ray.o.z) / ray.d.z + Ray.OFFSET;
+          if (t < tNear && t > distance) {
+            nz = -1;
+            nx = ny = 0;
+          }
+        }
+
+        ray.n.set(-nx, -ny, -nz);
         TexturedBlockModel.getIntersectionColor(ray);
         if (currentBlock.opaque) {
           ray.color.w = 1;
@@ -515,51 +587,38 @@ public class Octree {
       double tNear = Double.POSITIVE_INFINITY;
 
       // Testing all six sides of the current leaf node and advancing to the closest intersection
+      // Every side is unconditionally tested because the origin of the ray can be outside the block
       double t = ((lx << level) - ray.o.x) / ray.d.x;
-      if (t > Ray.EPSILON) {
+      if (t > distance) {
         tNear = t;
-        nx = 1;
-        ny = nz = 0;
-      } else {
-        t = (((lx + 1) << level) - ray.o.x) / ray.d.x;
-        if (t < tNear && t > Ray.EPSILON) {
-          tNear = t;
-          nx = -1;
-          ny = nz = 0;
-        }
+      }
+      t = (((lx + 1) << level) - ray.o.x) / ray.d.x;
+      if (t < tNear && t > distance) {
+        tNear = t;
       }
 
       t = ((ly << level) - ray.o.y) / ray.d.y;
-      if (t < tNear && t > Ray.EPSILON) {
+      if (t < tNear && t > distance) {
         tNear = t;
-        ny = 1;
-        nx = nz = 0;
-      } else {
-        t = (((ly + 1) << level) - ray.o.y) / ray.d.y;
-        if (t < tNear && t > Ray.EPSILON) {
-          tNear = t;
-          ny = -1;
-          nx = nz = 0;
-        }
+      }
+      t = (((ly + 1) << level) - ray.o.y) / ray.d.y;
+      if (t < tNear && t > distance) {
+        tNear = t;
       }
 
       t = ((lz << level) - ray.o.z) / ray.d.z;
-      if (t < tNear && t > Ray.EPSILON) {
+      if (t < tNear && t > distance) {
         tNear = t;
-        nz = 1;
-        nx = ny = 0;
-      } else {
-        t = (((lz + 1) << level) - ray.o.z) / ray.d.z;
-        if (t < tNear && t > Ray.EPSILON) {
-          tNear = t;
-          nz = -1;
-          nx = ny = 0;
-        }
+      }
+      t = (((lz + 1) << level) - ray.o.z) / ray.d.z;
+      if (t < tNear && t > distance) {
+        tNear = t;
       }
 
-      ray.o.scaleAdd(tNear, ray.d);
-      ray.n.set(nx, ny, nz);
-      ray.distance += tNear;
+      distance = tNear + Ray.EPSILON;
+      x = (int) QuickMath.floor(ray.o.x + ray.d.x * (distance + Ray.OFFSET));
+      y = (int) QuickMath.floor(ray.o.y + ray.d.y * (distance + Ray.OFFSET));
+      z = (int) QuickMath.floor(ray.o.z + ray.d.z * (distance + Ray.OFFSET));
     }
   }
 
