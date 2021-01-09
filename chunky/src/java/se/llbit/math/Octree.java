@@ -560,42 +560,42 @@ public class Octree {
         double t = x * invDx + offsetX;
         if (t > distance) {
           tNear = t;
-          nx = 1;
+          nx = -1;
         } else {
           t = (x + 1) * invDx + offsetX;
           if (t < tNear && t > distance) {
             tNear = t;
-            nx = -1;
+            nx = 1;
           }
         }
 
         t = y * invDy + offsetY;
         if (t < tNear && t > distance) {
           tNear = t;
-          ny = 1;
+          ny = -1;
           nx = 0;
         } else {
           t = (y + 1) * invDy + offsetY;
           if (t < tNear && t > distance) {
             tNear = t;
-            ny = -1;
+            ny = 1;
             nx = 0;
           }
         }
 
         t = z * invDz + offsetZ;
         if (t < tNear && t > distance) {
-          nz = 1;
+          nz = -1;
           nx = ny = 0;
         } else {
           t = (z + 1) * invDz + offsetZ;
           if (t < tNear && t > distance) {
-            nz = -1;
+            nz = 1;
             nx = ny = 0;
           }
         }
 
-        ray.n.set(-nx, -ny, -nz);
+        ray.n.set(nx, ny, nz);
         TexturedBlockModel.getIntersectionColor(ray);
         if (currentBlock.opaque) {
           ray.color.w = 1;
