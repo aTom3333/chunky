@@ -463,6 +463,16 @@ public class Octree {
     int y = (int) QuickMath.floor(ray.o.y + ray.d.y * Ray.OFFSET);
     int z = (int) QuickMath.floor(ray.o.z + ray.d.z * Ray.OFFSET);
 
+    // floating point division are slower than multiplication so we cache them
+    // We also try to limit the number of time the ray origin is updated
+    // as it would require to recompute those values
+    double invDx = 1 / ray.d.x;
+    double invDy = 1 / ray.d.y;
+    double invDz = 1 / ray.d.z;
+    double offsetX = -ray.o.x * invDx;
+    double offsetY = -ray.o.y * invDy;
+    double offsetZ = -ray.o.z * invDz;
+
     // Marching is done in a top-down fashion: at each step, the octree is descended from the root to find the leaf
     // node the ray is in. Terminating the march is then decided based on the block type in that leaf node. Finally the
     // ray is advanced to the boundary of the current leaf node and the next, ready for the next iteration.
@@ -504,7 +514,9 @@ public class Octree {
             return true;
 
           ray.o.scaleAdd(Ray.OFFSET, ray.d);
-
+          offsetX = -ray.o.x * invDx;
+          offsetY = -ray.o.y * invDy;
+          offsetZ = -ray.o.z * invDz;
           x = (int) QuickMath.floor(ray.o.x + ray.d.x * Ray.OFFSET);
           y = (int) QuickMath.floor(ray.o.y + ray.d.y * Ray.OFFSET);
           z = (int) QuickMath.floor(ray.o.z + ray.d.z * Ray.OFFSET);
@@ -513,6 +525,9 @@ public class Octree {
           // Exit ray from this local block.
           ray.setCurrentMaterial(Air.INSTANCE); // Current material is air.
           ray.exitBlock(x, y, z);
+          offsetX = -ray.o.x * invDx;
+          offsetY = -ray.o.y * invDy;
+          offsetZ = -ray.o.z * invDz;
           x = (int) QuickMath.floor(ray.o.x + ray.d.x * Ray.OFFSET);
           y = (int) QuickMath.floor(ray.o.y + ray.d.y * Ray.OFFSET);
           z = (int) QuickMath.floor(ray.o.z + ray.d.z * Ray.OFFSET);
@@ -536,25 +551,31 @@ public class Octree {
         // But by having the origin inside, we can skip some face (the face is the else are not always tested)
         // indeed when the origin is inside you can only have one of two parallel faces in front
         // and one in the back so if one is found, no need to test the other one
-        double t = -(x - ray.o.x) / ray.d.x + Ray.OFFSET;
+        offsetX = ray.o.x * invDx + Ray.OFFSET;
+        offsetY = ray.o.y * invDy + Ray.OFFSET;
+        offsetZ = ray.o.z * invDz + Ray.OFFSET;
+        invDx = -invDx;
+        invDy = -invDy;
+        invDz = -invDz;
+        double t = x * invDx + offsetX;
         if (t > distance) {
           tNear = t;
           nx = 1;
         } else {
-          t = -((x + 1) - ray.o.x) / ray.d.x + Ray.OFFSET;
+          t = (x + 1) * invDx + offsetX;
           if (t < tNear && t > distance) {
             tNear = t;
             nx = -1;
           }
         }
 
-        t = -(y - ray.o.y) / ray.d.y + Ray.OFFSET;
+        t = y * invDy + offsetY;
         if (t < tNear && t > distance) {
           tNear = t;
           ny = 1;
           nx = 0;
         } else {
-          t = -((y + 1) - ray.o.y) / ray.d.y + Ray.OFFSET;
+          t = (y + 1) * invDy + offsetY;
           if (t < tNear && t > distance) {
             tNear = t;
             ny = -1;
@@ -562,12 +583,12 @@ public class Octree {
           }
         }
 
-        t = -(z - ray.o.z) / ray.d.z + Ray.OFFSET;
+        t = z * invDz + offsetZ;
         if (t < tNear && t > distance) {
           nz = 1;
           nx = ny = 0;
         } else {
-          t = -((z + 1) - ray.o.z) / ray.d.z + Ray.OFFSET;
+          t = (z + 1) * invDz + offsetZ;
           if (t < tNear && t > distance) {
             nz = -1;
             nx = ny = 0;
@@ -588,29 +609,31 @@ public class Octree {
 
       // Testing all six sides of the current leaf node and advancing to the closest intersection
       // Every side is unconditionally tested because the origin of the ray can be outside the block
-      double t = ((lx << level) - ray.o.x) / ray.d.x;
+      // The computation involves a multiplication and an addition so we could use a fma (need java 9+)
+      // but according to measurement, performance are identical
+      double t = (lx << level) * invDx + offsetX;
       if (t > distance) {
         tNear = t;
       }
-      t = (((lx + 1) << level) - ray.o.x) / ray.d.x;
+      t = ((lx + 1) << level) * invDx + offsetX;
       if (t < tNear && t > distance) {
         tNear = t;
       }
 
-      t = ((ly << level) - ray.o.y) / ray.d.y;
+      t = (ly << level) * invDy + offsetY;
       if (t < tNear && t > distance) {
         tNear = t;
       }
-      t = (((ly + 1) << level) - ray.o.y) / ray.d.y;
+      t = ((ly + 1) << level) * invDy + offsetY;
       if (t < tNear && t > distance) {
         tNear = t;
       }
 
-      t = ((lz << level) - ray.o.z) / ray.d.z;
+      t = (lz << level) * invDz + offsetZ;
       if (t < tNear && t > distance) {
         tNear = t;
       }
-      t = (((lz + 1) << level) - ray.o.z) / ray.d.z;
+      t = ((lz + 1) << level) * invDz + offsetZ;
       if (t < tNear && t > distance) {
         tNear = t;
       }
