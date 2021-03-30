@@ -23,6 +23,7 @@ import org.apache.commons.math3.util.FastMath;
 import se.llbit.math.primitive.Primitive;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 
 import static se.llbit.math.BVH.SPLIT_LIMIT;
@@ -36,7 +37,8 @@ public abstract class BinaryBVH implements BVH.BVHImplementation {
     /** Note: This is public for some plugins. Stability is not guaranteed. */
     public int[] packed;
     public int depth;
-    public Primitive[][] packedPrimitives;
+    public Primitive[] flattenPrimitives;
+    private int primitiveIndex;
 
     public static abstract class Node {
         public final AABB bb;
@@ -126,22 +128,23 @@ public abstract class BinaryBVH implements BVH.BVHImplementation {
     /**
      * Helper method to pack a node-based BVH. Uses {@code packNode}.
      */
-    public void pack(Node root) {
+    public void pack(Node root, int primitiveCount) {
         IntArrayList data = new IntArrayList(root.size());
-        ArrayList<Primitive[]> packedPrimitives = new ArrayList<>(data.size() / SPLIT_LIMIT);
-        this.depth = packNode(root, data, packedPrimitives);
+        this.flattenPrimitives = new Primitive[primitiveCount];
+        this.depth = packNode(root, data);
         this.packed = data.toIntArray();
-        this.packedPrimitives = packedPrimitives.toArray(new Primitive[0][]);
     }
 
     /**
      * Recursive algorithm to pack a node-based BVH into an int(ArrayList). Nodes are packed as follows:
-     * int 0: Second child index. If this is a leaf, it is the negation of the index of the corresponding list of primitives.
+     * int 0: Second child index. If this is a leaf, it is the negation of the identifier of the list of primitives.
+     *        The identifier is composed of the index of the first primitive in the flatten array shifted left by 3
+     *        and the number of primitives stored in the 3 low bits.
      *        The first child immediately follows this (byte 8+). The second child starts at the index pointed to by this int.
      * int 1-6: AABB bounds stored as floats. Float bits are converted into int bits for more compact storage.
      * This compact array storage helps decrease memory usage and increases intersection speed.
      */
-    public int packNode(Node node, IntArrayList data, ArrayList<Primitive[]> primitives) {
+    public int packNode(Node node, IntArrayList data) {
         int index = data.size();
         int depth;
         data.add(0);  // Next child (to be set)
@@ -149,15 +152,19 @@ public abstract class BinaryBVH implements BVH.BVHImplementation {
 
         if (node instanceof Group) {
             Group group = (Group)node;
-            depth = packNode(group.child1, data, primitives);
+            depth = packNode(group.child1, data);
             group.child1 = null; // make it possible to gc the subtree
             data.set(index, data.size()); // Second child location
-            depth = FastMath.max(packNode(group.child2, data, primitives), depth);
+            depth = FastMath.max(packNode(group.child2, data), depth);
             group.child2 = null; // idem
         } else if (node instanceof Leaf) {
+            Leaf leaf = (Leaf) node;
             depth = 1;
-            data.set(index, -primitives.size());  // Negative number = pointer to primitives array
-            primitives.add(((Leaf) node).primitives);
+            int primIdx = primitiveIndex;
+            int datum = (primIdx << 3) | leaf.primitives.length;
+            data.set(index, -datum);  // Negative number = index of start of primitives + count
+            System.arraycopy(leaf.primitives, 0, flattenPrimitives, primIdx, leaf.primitives.length);
+            primitiveIndex += leaf.primitives.length;
         } else {
             depth = 0;
             data.set(index, index+7); // Skip this
@@ -196,8 +203,11 @@ public abstract class BinaryBVH implements BVH.BVHImplementation {
         while (true) {
             if (packed[currentNode] <= 0) {
                 // Is leaf
-                int primIndex = -packed[currentNode];
-                for (Primitive primitive : packedPrimitives[primIndex]) {
+                int datum = -packed[currentNode];
+                int primIndex = datum >> 3;
+                int count = datum & 0x7;
+                for(int i = 0; i < count; ++i) {
+                    Primitive primitive = flattenPrimitives[primIndex+i];
                     hit = primitive.intersect(ray) || hit;
                 }
 

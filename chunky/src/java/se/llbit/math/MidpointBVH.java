@@ -49,7 +49,7 @@ public class MidpointBVH extends BinaryBVH {
 
     public MidpointBVH(Primitive[] primitives) {
         Node root = constructMidpointSplit(primitives);
-        pack(root);
+        pack(root, primitives.length);
         Log.info("Built MIDPOINT BVH with depth: " + this.depth);
     }
 

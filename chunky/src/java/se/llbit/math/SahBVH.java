@@ -50,7 +50,7 @@ public class SahBVH extends BinaryBVH {
 
     public SahBVH(Primitive[] primitives) {
         Node root = constructSAH(primitives);
-        pack(root);
+        pack(root, primitives.length);
         Log.info("Built SAH BVH with depth: " + this.depth);
     }
 
