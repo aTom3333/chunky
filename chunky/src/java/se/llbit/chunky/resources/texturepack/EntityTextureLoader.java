@@ -47,6 +47,7 @@ public class EntityTextureLoader extends TextureLoader {
     }
 
     texture.setTexture(image);
+    texture.compress();
 
     boolean extended = image.height == image.width;
     double height = extended ? 64 : 32;
