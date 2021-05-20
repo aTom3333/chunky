@@ -42,7 +42,7 @@ public class AnimatedTexture extends Texture {
         (int) ((1 - v) * frameHeight - Ray.EPSILON + i * frameHeight));
   }
 
-  @Override public void setTexture(BitmapImage newImage) {
+  @Override public void setTexture(Image newImage) {
     super.setTexture(newImage);
     updateNumFrames();
   }
