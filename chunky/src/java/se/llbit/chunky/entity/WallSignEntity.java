@@ -112,7 +112,7 @@ public class WallSignEntity extends Entity {
     Quad[] quads = faces[orientation];
     for (int i = 0; i < quads.length; ++i) {
       Quad quad = quads[i];
-      Material material = new TextureMaterial(i == 0 ? frontTexture : texture);
+      Material material = TextureMaterial.getForTexture(i == 0 ? frontTexture : texture);
       quad.addTriangles(primitives, material, transform);
     }
     return primitives;

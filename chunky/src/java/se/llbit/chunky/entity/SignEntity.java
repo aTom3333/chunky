@@ -263,7 +263,7 @@ public class SignEntity extends Entity {
         .translate(position.x + offset.x, position.y + offset.y, position.z + offset.z);
     for (int i = 0; i < sides.length; ++i) {
       Quad quad = rot[angle][i];
-      Material material = new TextureMaterial(i == 0 ? frontTexture : texture);
+      Material material = TextureMaterial.getForTexture(i == 0 ? frontTexture : texture);
       quad.addTriangles(primitives, material, transform);
     }
     return primitives;
