@@ -468,6 +468,6 @@ public class StandingBanner extends Entity {
     }
     Texture texture = new Texture(tinted);
     TextureCache.put(design, texture);
-    return TextureMaterial.getForTexture(texture);
+    return new TextureMaterial(texture);
   }
 }
