@@ -33,6 +33,7 @@ import se.llbit.chunky.resources.EntityTexture;
 import se.llbit.chunky.resources.Texture;
 import se.llbit.chunky.resources.texturepack.EntityTextureLoader;
 import se.llbit.chunky.resources.texturepack.TextureFormatError;
+import se.llbit.chunky.world.material.TextureMaterial;
 import se.llbit.json.JsonObject;
 import se.llbit.json.JsonValue;
 import se.llbit.log.Log;
@@ -78,8 +79,12 @@ public class HeadEntity extends Entity {
   @Override
   public Collection<Primitive> primitives(Vector3 offset) {
     EntityTexture texture = Texture.steve;
+    TextureMaterial material;
     if (skin != null && !skin.isEmpty()) {
       texture = downloadSkin();
+      material = new TextureMaterial(texture); // don't cache player head
+    } else {
+      material = TextureMaterial.getForTexture(texture); // cache steve
     }
 
     Collection<Primitive> faces = new LinkedList<>();
@@ -127,19 +132,19 @@ public class HeadEntity extends Entity {
         break;
     }
     head.transform(transform);
-    head.addFrontFaces(faces, texture, texture.headFront);
-    head.addBackFaces(faces, texture, texture.headBack);
-    head.addTopFaces(faces, texture, texture.headTop);
-    head.addBottomFaces(faces, texture, texture.headBottom);
-    head.addRightFaces(faces, texture, texture.headRight);
-    head.addLeftFaces(faces, texture, texture.headLeft);
+    head.addFrontFaces(faces, material, texture.headFront);
+    head.addBackFaces(faces, material, texture.headBack);
+    head.addTopFaces(faces, material, texture.headTop);
+    head.addBottomFaces(faces, material, texture.headBottom);
+    head.addRightFaces(faces, material, texture.headRight);
+    head.addLeftFaces(faces, material, texture.headLeft);
     hat.transform(transform);
-    hat.addFrontFaces(faces, texture, texture.hatFront);
-    hat.addBackFaces(faces, texture, texture.hatBack);
-    hat.addLeftFaces(faces, texture, texture.hatLeft);
-    hat.addRightFaces(faces, texture, texture.hatRight);
-    hat.addTopFaces(faces, texture, texture.hatTop);
-    hat.addBottomFaces(faces, texture, texture.hatBottom);
+    hat.addFrontFaces(faces, material, texture.hatFront);
+    hat.addBackFaces(faces, material, texture.hatBack);
+    hat.addLeftFaces(faces, material, texture.hatLeft);
+    hat.addRightFaces(faces, material, texture.hatRight);
+    hat.addTopFaces(faces, material, texture.hatTop);
+    hat.addBottomFaces(faces, material, texture.hatBottom);
     return faces;
   }
 
